@@ -1,0 +1,64 @@
+### EXAMPLE 
+## in: options.yaml
+# options:
+#   - name: Test Option 1
+#     description: This Option is just a demonstration
+#     yaml: test.option.1
+#     env: TEST_OPTION_1
+#     default: "default-value-for-option-1"
+# ---
+## out: OPTIONS.md
+# ## OPTIONS.md
+# | SHORT NAME    | DESCRIPTION                         | YAML ACESSOR KEY | DEFAULT VALUE                |
+# |---------------|-------------------------------------|------------------|------------------------------|
+# | Test Option 1 | this option is just a demonstration | test.option.1    | "default-value-for-option-1" |
+# ---
+
+options:  
+  - name: Postgres Username
+    description: external database username
+    yaml: postgres.username    
+    default: postgres
+  - name: Postgres Password
+    description: external database password
+    yaml: postgres.password    
+    default: postgres
+  - name: Postgres Database
+    description: external database name
+    yaml: postgres.database    
+    default: postgres
+  - name: Postgres Schema
+    description: external database password
+    yaml: postgres.schema    
+    default: ""
+  - name: Postgress SSL
+    description: force ssl mode
+    yaml: postgres.ssl.enabled    
+    default: false
+  
+  - name: OpenTelemetry Enabled
+    description: enable trace collection and grpc exporter
+    yaml: otel.enabled
+    default: false
+  - name: OpenTelemetry Endpoint
+    description: collector hostname
+    yaml: otel.collector.endpoint
+    default: localhost
+  - name: OpenTelemetry Port
+    description: collector port
+    yaml: otel.collector.port
+    default: 4317
+
+  - name: OpenTelemetry Prometheus Exporter
+    description: enable prometheus exporter (grpc)
+    yaml: otel.prometheus.enabled
+    default: false
+  - name: OpenTelemetry Prometheus Port
+    description: exporter server port
+    yaml: otel.prometheus.port
+    default: 2223
+  - name: OpenTelemetry Prometheus Path
+    description: exporter server path
+    yaml: otel.prometheus.path
+    default: /metrics
+  

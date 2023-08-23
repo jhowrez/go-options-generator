@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"flag"
 	"go/format"
 	"os"
@@ -9,7 +10,12 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 	"gopkg.in/yaml.v3"
+
+	_ "embed"
 )
+
+//go:embed templates
+var templateFS embed.FS
 
 func templateLoadExecuteSave(name string, data any, outputfilename string, opts templateExecuteOptions) {
 	outFile, err := os.Create(outputfilename)
@@ -17,7 +23,7 @@ func templateLoadExecuteSave(name string, data any, outputfilename string, opts 
 	defer outFile.Close()
 
 	tpl := template.Must(
-		template.New(name).Funcs(sprig.FuncMap()).Funcs(localFuncMap()).ParseFiles("templates/" + name),
+		template.New(name).Funcs(sprig.FuncMap()).Funcs(localFuncMap()).ParseFS(templateFS, "templates/"+name),
 	)
 
 	tmplOutBuf := bytes.NewBuffer(nil)

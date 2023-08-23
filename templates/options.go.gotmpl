@@ -57,7 +57,12 @@ func OptionsInit(configFilenamePtr *string) {
 	{{ end }}
 
 	viper.AddConfigPath(".")
-	viper.SetConfigName("device-svc")
+	if configFilenamePtr == nil {
+		viper.SetConfigName("options")		
+	}else {
+		viper.SetConfigName(*configFilenamePtr)
+	}
+
 	viper.SetConfigType("yaml")
 	viper.WatchConfig()
 	viper.OnConfigChange(func(in fsnotify.Event) {

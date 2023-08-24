@@ -72,3 +72,7 @@ func OptionsInit(configFilenamePtr *string) {
 	viper.ReadInConfig()
 	viper.Unmarshal(&applicationOptions)
 }
+
+func GetOptions() ApplicationOptions {
+	return applicationOptions
+}

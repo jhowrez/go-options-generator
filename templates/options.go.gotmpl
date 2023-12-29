@@ -5,6 +5,9 @@ package {{ .PackageName }}
 import (	
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	{{ range $childValue := .ExtraImports}}
+	{{ $childValue | doubleQuotes }}
+	{{ end }}
 )
 
 var (	
@@ -14,7 +17,7 @@ var (
 {{- define "genStructOptFn" -}}	
 	{{ if isMap . }}
 	{{/* get children */}}		
-	{{- range $childKey, $childValue := . }}
+	{{- range $childKey, $childValue := . }}	
 
 	{{- if isMap $childValue | not -}}
 		// {{ index $childValue 2 }}
@@ -26,7 +29,7 @@ var (
 			{{- template "genStructOptFn" $childValue -}}
 		}
 	{{- else -}}		
-		{{ " " }} {{- index $childValue 0 | typeOf }}	`yaml:"{{ index $childValue 1}}"`
+		{{ " " }} {{- typeOf (index $childValue 0) (index $childValue 3)}}	`yaml:"{{ index $childValue 1}}"`
 	{{- end }}
 	{{ end -}}			
 	{{ else }}
@@ -46,14 +49,35 @@ func OptionsInit(configFilenamePtr *string) {
   	{{ range .Options -}}
 	// {{.Yaml}}
 	{{ $vars := mustRegexSplit "\\." .Yaml -1 -}}
+
+	
 	applicationOptions.{{ $varsLen := len $vars -}}
 	{{ range $i,$e := $vars -}}
 		{{ if eq add $varsLen -1 $i | not -}}
 		.
 		{{- end -}}
 		{{ $e | camelcase -}}
-	{{ end }} = {{ .DefaultValue | doubleQuotes }}
-	viper.SetDefault("{{ .Yaml }}", {{ .DefaultValue | doubleQuotes }})
+	{{ end }} 
+	{{- if isDuration .Format -}}
+	,_
+	{{- end -}}
+	= 
+	{{- if isDuration .Format -}}
+	time.ParseDuration({{ .DefaultValue | doubleQuotes }})
+	{{- else -}}
+	{{ .DefaultValue | doubleQuotes }}
+	{{- end }}
+
+	
+	viper.SetDefault("{{ .Yaml }}", 
+		applicationOptions.{{ $varsLen := len $vars -}}
+		{{ range $i,$e := $vars -}}
+			{{ if eq add $varsLen -1 $i | not -}}
+			.
+			{{- end -}}
+			{{ $e | camelcase -}}
+		{{ end }},
+	)
 	{{ end }}
 
 	viper.AddConfigPath(".")

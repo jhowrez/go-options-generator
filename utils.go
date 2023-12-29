@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 	"text/template"
@@ -60,12 +61,23 @@ func getAndSetFromKey(inMap map[string]interface{}, fullKey string, curLevel int
 	getAndSetFromKey(inMap[refKey].(map[string]interface{}), fullKey, curLevel+1, value)
 }
 
-func (odf *OptionsDefinitionFile) consolidateStructMap() {
+func (odf *OptionsDefinitionFile) consolidate() {
+	// struct map
 	outMap := map[string]interface{}{}
 	for _, opt := range odf.Options {
-		getAndSetFromKey(outMap, opt.Yaml, 0, []any{opt.DefaultValue, opt.Yaml, opt.Description})
+		getAndSetFromKey(outMap, opt.Yaml, 0, []any{opt.DefaultValue, opt.Yaml, opt.Description, opt.Format})
 	}
 	odf.StructMap = outMap
+
+	// extra imports
+	for _, opt := range odf.Options {
+		if opt.Format != "" {
+			importStr := getImportForFormat(opt.Format)
+			if importStr != "" {
+				odf.ExtraImports = append(odf.ExtraImports, importStr)
+			}
+		}
+	}
 }
 
 type templateExecuteOptions struct {
@@ -78,9 +90,40 @@ func fatalOnErr(err error) {
 	}
 }
 
+func getTypeForFormat(f string) string {
+	if f == "" {
+		return ""
+	}
+	switch f {
+	case "duration":
+		return "time.Duration"
+	default:
+		log.Fatalf("format %s is not defined", f)
+	}
+
+	return "any"
+}
+
+func getImportForFormat(f string) string {
+	if f == "" {
+		return ""
+	}
+	switch f {
+	case "duration":
+		return "time"
+	default:
+		log.Fatalf("format %s is not defined", f)
+	}
+
+	return ""
+}
+
 func localFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"typeOf": func(a any) string {
+		"typeOf": func(a any, f string) string {
+			if f != "" {
+				return getTypeForFormat(f)
+			}
 			if a == nil {
 				return "any"
 			}
@@ -101,6 +144,9 @@ func localFuncMap() template.FuncMap {
 		"isMap": func(in any) bool {
 			k := reflect.TypeOf(in).Kind()
 			return k == reflect.Map
+		},
+		"isDuration": func(f string) bool {
+			return f == "duration"
 		},
 	}
 }

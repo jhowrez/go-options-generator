@@ -1,4 +1,4 @@
-### EXAMPLE 
+### EXAMPLE
 ## in: options.yaml
 # options:
 #   - name: Test Option 1
@@ -14,28 +14,28 @@
 # | Test Option 1 | this option is just a demonstration | test.option.1    | "default-value-for-option-1" |
 # ---
 
-options:  
+options:
   - name: Postgres Username
     description: external database username
-    yaml: postgres.username    
+    yaml: postgres.username
     default: postgres
   - name: Postgres Password
     description: external database password
-    yaml: postgres.password    
+    yaml: postgres.password
     default: postgres
   - name: Postgres Database
     description: external database name
-    yaml: postgres.database    
+    yaml: postgres.database
     default: postgres
   - name: Postgres Schema
     description: external database password
-    yaml: postgres.schema    
+    yaml: postgres.schema
     default: ""
   - name: Postgress SSL
     description: force ssl mode
-    yaml: postgres.ssl.enabled    
+    yaml: postgres.ssl.enabled
     default: false
-  
+
   - name: OpenTelemetry Enabled
     description: enable trace collection and grpc exporter
     yaml: otel.enabled
@@ -61,4 +61,9 @@ options:
     description: exporter server path
     yaml: otel.prometheus.path
     default: /metrics
-  
+
+  - name: Watchdog Interval
+    description: watchdog interval duration
+    yaml: system.watchdog.interval
+    format: duration
+    default: 10s    

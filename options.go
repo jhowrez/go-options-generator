@@ -59,7 +59,7 @@ func main() {
 	// unmarshal definition file
 	err = yaml.Unmarshal(inOptsFileDataRaw, &optsMap)
 	fatalOnErr(err)
-	optsMap.consolidateStructMap()
+	optsMap.consolidate()
 
 	// OPTIONS.md
 	templateLoadExecuteSave("OPTIONS.md.gotmpl", optsMap, genCfg.OutputMarkdown, templateExecuteOptions{})

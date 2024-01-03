@@ -66,4 +66,18 @@ options:
     description: watchdog interval duration
     yaml: system.watchdog.interval
     format: duration
-    default: 10s    
+    default: 10s
+
+  - name: HTTP Server Listen Ports List
+    description: all ports to listen to
+    yaml: http.server.ports    
+    default:            
+      - 81
+      - 82
+
+  - name: Generic List
+    description: just to showoff slices
+    yaml: generic.list
+    default:            
+      - 81
+      - "82"

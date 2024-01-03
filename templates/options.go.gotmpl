@@ -46,29 +46,12 @@ type ApplicationOptions struct {
 }
 
 func OptionsInit(configFilenamePtr *string) {
-  	{{ range .Options -}}
+  	{{ range .Options }}
 	// {{.Yaml}}
-	{{ $vars := mustRegexSplit "\\." .Yaml -1 -}}
-
+	{{$vars := mustRegexSplit "\\." .Yaml -1 -}}
 	
-	applicationOptions.{{ $varsLen := len $vars -}}
-	{{ range $i,$e := $vars -}}
-		{{ if eq add $varsLen -1 $i | not -}}
-		.
-		{{- end -}}
-		{{ $e | camelcase -}}
-	{{ end }} 
-	{{- if isDuration .Format -}}
-	,_
-	{{- end -}}
-	= 
-	{{- if isDuration .Format -}}
-	time.ParseDuration({{ .DefaultValue | doubleQuotes }})
-	{{- else -}}
-	{{ .DefaultValue | doubleQuotes }}
-	{{- end }}
-
-	
+	{{ $accessName := print "applicationOptions." (varAccessName $vars) -}}	
+	{{ defaultValueWrapper $accessName .DefaultValue .Format }}
 	viper.SetDefault("{{ .Yaml }}", 
 		applicationOptions.{{ $varsLen := len $vars -}}
 		{{ range $i,$e := $vars -}}
@@ -78,7 +61,7 @@ func OptionsInit(configFilenamePtr *string) {
 			{{ $e | camelcase -}}
 		{{ end }},
 	)
-	{{ end }}
+	{{ end -}}
 
 	viper.AddConfigPath(".")
 	if configFilenamePtr == nil {

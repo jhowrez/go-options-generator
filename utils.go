@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"text/template"
+
+	"github.com/huandu/xstrings"
 )
 
 func GetValueByPathFromMap(data map[string]any, key string, passedKey string) (result any, found bool) {
@@ -73,8 +75,8 @@ func (odf *OptionsDefinitionFile) consolidate() {
 	for _, opt := range odf.Options {
 		if opt.Format != "" {
 			importStr := getImportForFormat(opt.Format)
-			if importStr != "" {
-				odf.ExtraImports = append(odf.ExtraImports, importStr)
+			if len(importStr) > 0 {
+				odf.ExtraImports = append(odf.ExtraImports, importStr...)
 			}
 		}
 	}
@@ -105,18 +107,55 @@ func getTypeForFormat(f string) string {
 	return "any"
 }
 
-func getImportForFormat(f string) string {
+func getImportForFormat(f string) []string {
 	if f == "" {
-		return ""
+		return []string{}
 	}
 	switch f {
 	case "duration":
-		return "time"
+		return []string{"github.com/jhowrez/go-options-generator/pkg/wrappers", "time"}
 	default:
 		log.Fatalf("format %s is not defined", f)
 	}
 
-	return ""
+	return []string{}
+}
+
+func typeForValue(v any) string {
+	vKind := reflect.ValueOf(v).Kind()
+	tStr := ""
+	switch vKind {
+	case reflect.Array:
+		fallthrough
+	case reflect.Slice:
+		tStr += "[]"
+		isSingleType := true
+		valueList := v.([]interface{})
+		lastValue := reflect.Interface
+		for i, e := range valueList {
+			k := reflect.ValueOf(e).Kind()
+			if i == 0 {
+				lastValue = k
+				continue
+			}
+			if lastValue != k {
+				isSingleType = false
+				break
+			}
+		}
+
+		if isSingleType {
+			tStr += lastValue.String()
+		} else {
+			tStr += "interface{}"
+		}
+
+	default:
+		tStr = fmt.Sprintf("%T", v)
+	}
+
+	return tStr
+
 }
 
 func localFuncMap() template.FuncMap {
@@ -128,7 +167,7 @@ func localFuncMap() template.FuncMap {
 			if a == nil {
 				return "any"
 			}
-			return fmt.Sprintf("%T", a)
+			return typeForValue(a)
 		},
 		"doubleQuotes": func(a any) string {
 			switch a.(type) {
@@ -148,6 +187,55 @@ func localFuncMap() template.FuncMap {
 		},
 		"isDuration": func(f string) bool {
 			return f == "duration"
+		},
+		"varAccessName": func(keys []string) string {
+			accessName := ""
+			for i, key := range keys {
+				if i > 0 {
+					accessName += "."
+				}
+				accessName += xstrings.ToCamelCase(key)
+			}
+			return accessName
+		},
+		"defaultValueWrapper": func(varName string, v any, format string) any {
+			vKind := reflect.ValueOf(v).Kind()
+			t := fmt.Sprintf("%s = ", varName)
+			vStr := ""
+
+			switch vKind {
+			case reflect.Array:
+				fallthrough
+			case reflect.Slice:
+				valueList := v.([]interface{})
+				t += typeForValue(valueList)
+				t += "{"
+				for i, e := range valueList {
+					if i > 0 {
+						t += ","
+					}
+					if reflect.ValueOf(e).Kind() == reflect.String {
+						t += fmt.Sprintf("\"%s\"", e)
+					} else {
+						t += fmt.Sprintf("%v", e)
+					}
+
+				}
+				t += "}"
+			case reflect.String:
+				vStr += fmt.Sprintf("\"%s\"", v)
+			default:
+				vStr += fmt.Sprintf("%v", v)
+			}
+			switch format {
+			case "duration":
+				t += fmt.Sprintf("wrappers.MustParseDuration(%s)", vStr)
+			case "":
+				t += vStr
+			default:
+				log.Panicf("invalid format '%s'", format)
+			}
+			return t
 		},
 	}
 }
